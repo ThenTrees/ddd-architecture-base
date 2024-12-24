@@ -1,2 +1,71 @@
 server:
   port: 1122
+  tomcat:
+    threads:
+      max: 200
+
+spring:
+  application:
+    name: xxx-start
+  datasource:
+    hikari:
+      maximum-pool-size: 20 # Số lượng tối đa kết nối
+      minimum-idle: 5 # Số lượng kết nối tối thiểu
+    url: jdbc:mysql://localhost:3306/vetautet
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.zaxxer.hikari.HikariDataSource
+  jpa:
+    database: MYSQL
+    show-sql: true
+    hibernate:
+      ddl-auto: none # không tự tạo bảng/ cập nhật thay vi update
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+  jackson:
+    serialization:
+      indent-output: true
+#      config server redis at here
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      checkRandom:
+        registerHealthIndicator: true # Đăng ký health check
+        slidingWindowSize: 10 # Số lượng request được lưu trữ trong sliding window
+        permittedNumberOfCallsInHalfOpenState: 3 # Số lượng request được phép trong trạng thái half open
+        slidingWindowType: TIME_BASED # Loại sliding window, đánh giá dựa trên thời gian
+        minimumNumberOfCalls: 5 # Số lượng request tối thiểu để tính toán failure rate
+        waitDurationInOpenState: 5s # Thời gian chờ trước khi chuyển sang half open
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+
+  ratelimiter:
+    instances:
+      backendA:
+        limitForPeriod: 2 # Số lần request tối đa trong 1 khoảng thời gian
+        limitRefreshPeriod: 10s # Khoảng thời gian giữa 2 khoảng thời gian (reset sau mỗi giây) -  sau mỗi s system se reset cho 2 request
+        timeoutDuration: 0 # Thời gian timeout
+        registerHealthIndicator: true # Đăng ký health check
+        eventConsumerBufferSize: 100 # Kích thước buffer
+      backendB:
+        limitForPeriod: 6 # Số lần request tối đa trong 1 khoảng thời gian
+        limitRefreshPeriod: 10s
+        timeoutDuration: 3s
+
+#theo doi health check
+management:
+  health:
+    circuitbreakers:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include:
+          - '*'
+  endpoint:
+    health:
+      show-details: always
